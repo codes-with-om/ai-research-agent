@@ -1,5 +1,6 @@
 from app.state import ResearchState
 from app.llm.client import call_llm
+from app.tools.web_search import web_search
 
 def planner_node(state: ResearchState)-> ResearchState:
     query = state["query"]
@@ -27,18 +28,68 @@ def planner_node(state: ResearchState)-> ResearchState:
 
     return state
 
-def researcher_node(state: ResearchState)-> ResearchState:
-    plan = state['plan']
+def search_query_node(state: ResearchState) -> ResearchState:
+    query = state["query"]
+    plan = state["plan"]
+
     plan_text = "\n".join(plan)
 
     prompt = f"""
-    Based on the research plan below, create detailed research notes.
+    Create one focused web search query for researching the user's question.
+
+    User Question:
+    {query}
 
     Research Plan:
     {plan_text}
 
-    Return one research note per line.
-    Do not add introduction or conclusion.
+    Rules:
+    - Return only the search query.
+    - Do not add explanation.
+    - Prefer current flagship products and models.
+    - Avoid outdated model names unless the user asks for historical comparison.
+    - For OpenAI, Anthropic, and Google AI comparisons, prefer terms like GPT, Claude, and Gemini.
+    - The search query should be practical and current, not academic.
+    - Prefer company/product comparison keywords.
+    - Avoid benchmark names unless the user specifically asks for benchmarks.
+    - Make Output under 12 words.
+    """
+
+    search_query = call_llm(prompt).strip()
+    search_query = search_query.replace('"', "")
+
+    words = search_query.split()
+    search_query = " ".join(words[:12])
+
+    state["search_query"] = search_query
+
+    return state
+
+def researcher_node(state: ResearchState)-> ResearchState:
+    plan = state['plan']
+    plan_text = "\n".join(plan)
+
+    search_query = state["search_query"]
+    search_results = web_search(search_query, max_results=3)
+    search_text = "\n\n".join(search_results)
+
+    prompt = f"""
+    You are a research assistant.
+
+    Use the research plan and web search results below to create grounded research notes.
+
+    Research Plan:
+    {plan_text}
+
+    Web Search Results:
+    {search_text}
+
+    Rules:
+    - Return one research note per line.
+    - Use only information supported by the web search results.
+    - Do not invent statistics, model sizes, funding numbers, or benchmark scores.
+    - If the search results do not contain enough information, say that clearly.
+    - Do not add introduction or conclusion.
     """        
 
     llm_response = call_llm(prompt)
@@ -70,6 +121,14 @@ def writer_node(state: ResearchState)-> ResearchState:
     Write a complete answer.
     Use clear paragraphs.
     Do not mention that these are research notes.
+
+    Rules:
+    - Use only the provided research notes.
+    - Do not invent statistics, parameter counts, benchmark scores, pricing, or dataset sizes.
+    - If the notes do not contain exact numbers, avoid exact numbers.
+    - Keep the answer practical and concise.
+    - If a statement is uncertain or not clearly supported, phrase it cautiously.
+    - Avoid naming specific versions unless present in the research notes.
     """
 
     llm_response = call_llm(prompt)
@@ -123,6 +182,12 @@ def finalizer_node(state: ResearchState)-> ResearchState:
     Return only the final improved answer.
     Do not mention reviewer feedback.
     Do not include phrases like "Feedback Applied".
+
+    Rules:
+    - Do not add new facts that are not present in the draft answer.
+    - Do not invent statistics, parameter counts, benchmark scores, pricing, or dataset sizes.
+    - Preserve factual caution.
+    - Remove unsupported or overly specific claims.
     """
 
     final_answer = call_llm(prompt)

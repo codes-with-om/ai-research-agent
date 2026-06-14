@@ -4,6 +4,7 @@ from typing import TypedDict, Optional
 class ResearchState(TypedDict):
     query: str
     plan: Optional[list[str]]
+    search_query: Optional[str]
     research_notes: Optional[list[str]]
     draft_answer: Optional[str]
     review_feedback: Optional[str]
