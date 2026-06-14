@@ -41,3 +41,12 @@ def research(request: ResearchRequest):
         "status": "completed",
         "message": final_state["final_answer"]
     }
+
+from app.llm.client import call_llm
+
+@app.get("/test_llm")
+def test_llm():
+    response = call_llm("Say hello in one short sentence.")
+    return {
+        "response" : response
+    }

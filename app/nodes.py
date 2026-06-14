@@ -1,12 +1,26 @@
 from app.state import ResearchState
+from app.llm.client import call_llm
 
 def planner_node(state: ResearchState)-> ResearchState:
     query = state["query"]
 
+    prompt = f"""
+    Create a short research plan for the user query below.
+
+    User query:
+    {query}
+
+    Return only 3 to 5 research steps.
+    Each step should be on a new line.
+    Do not add explanation.
+    """
+
+    llm_response = call_llm(prompt)
+
     plan = [
-        f"Understand the topic: {query}",
-        "Find key concepts and definitions",
-        "Find benefits, limitations, and use cases",
+        step.strip()
+        for step in llm_response.split("\n")
+        if step.strip()
     ]
 
     state["plan"] = plan
