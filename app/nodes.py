@@ -2,14 +2,50 @@ from app.state import ResearchState
 from app.llm.client import call_llm
 from app.tools.web_search import web_search
 
+def query_analyzer_node(state: ResearchState) -> ResearchState:
+    query = state['query']
+
+    prompt = f"""
+    Analyze the user's query for an AI research agent.
+
+    User Query:
+    {query}
+
+    Identify:
+    - Topic/domain
+    - User intent
+    - Important entities
+    - Any ambiguity
+
+    If the query contains common AI terms like RAG, assume the AI/ML meaning unless the user clearly means something else.
+
+    Return a short analysis in 3 to 5 lines.
+
+    Acronym rules:
+    - Do not invent acronym expansions.
+    - Prefer widely used AI/ML expansions for AI-related acronyms.
+    - RAG means Retrieval-Augmented Generation in AI/ML context.
+    - RLHF means Reinforcement Learning from Human Feedback.
+    """
+
+    query_analysis = call_llm(prompt)
+
+    state["query_analysis"] = query_analysis
+
+    return state
+
 def planner_node(state: ResearchState)-> ResearchState:
     query = state["query"]
+    query_analysis = state["query_analysis"]
 
     prompt = f"""
     Create a short research plan for the user query below.
 
     User query:
     {query}
+
+    Query Analysis:
+    {query_analysis}
 
     Return only 3 to 5 research steps.
     Each step should be on a new line.
@@ -31,17 +67,33 @@ def planner_node(state: ResearchState)-> ResearchState:
 def search_query_node(state: ResearchState) -> ResearchState:
     query = state["query"]
     plan = state["plan"]
+    query_analysis = state["query_analysis"]
 
     plan_text = "\n".join(plan)
 
     prompt = f"""
     Create one focused web search query for researching the user's question.
+    Use the identified user intent from Query Analysis.
+
+    If intent is Explanation:
+    - create an explanation-focused search query
+
+    If intent is Comparison:
+    - create a comparison-focused search query
+
+    If intent is Current Events:
+    - create a news-focused search query
+
+    Use the entity meaning from Query Analysis. Do not reinterpret acronyms.
 
     User Question:
     {query}
 
     Research Plan:
     {plan_text}
+
+    Query Analysis:
+    {query_analysis}
 
     Rules:
     - Return only the search query.
@@ -53,6 +105,8 @@ def search_query_node(state: ResearchState) -> ResearchState:
     - Prefer company/product comparison keywords.
     - Avoid benchmark names unless the user specifically asks for benchmarks.
     - Make Output under 12 words.
+    - If the user asks "what is", "explain", or "define", create a definition/explanation search query.
+    - Do not create comparison queries unless the user explicitly asks to compare.
     """
 
     search_query = call_llm(prompt).strip()
@@ -72,6 +126,8 @@ def researcher_node(state: ResearchState)-> ResearchState:
     search_query = state["search_query"]
     search_results = web_search(search_query, max_results=3)
     search_text = "\n\n".join(search_results)
+
+    state["web_results"] = search_results
 
     prompt = f"""
     You are a research assistant.
