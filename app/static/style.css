@@ -643,3 +643,96 @@ body {
     font-size: 15px;
   }
 }
+/* Mobile UI Fix */
+
+@media (max-width: 768px) {
+  body {
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  .app {
+    height: 100dvh;
+  }
+
+  .main {
+    height: 100dvh;
+  }
+
+  .topbar {
+    padding: 16px 18px;
+  }
+
+  .topbar-title {
+    font-size: 24px;
+  }
+
+  .topbar-model {
+    font-size: 14px;
+    padding: 5px 14px;
+  }
+
+  .status-badge {
+    font-size: 16px;
+    padding: 8px 14px;
+  }
+
+  .chat-box {
+    padding: 22px 16px;
+    gap: 18px;
+  }
+
+  .msg-row {
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .msg-avatar {
+    width: 44px;
+    height: 44px;
+    font-size: 16px;
+  }
+
+  .msg-row.bot .msg-bubble {
+    max-width: calc(100% - 58px);
+    font-size: 18px;
+    line-height: 1.65;
+    padding: 18px 20px;
+    border-radius: 18px;
+  }
+
+  .msg-row.user .msg-bubble {
+    max-width: calc(100% - 58px);
+    font-size: 17px;
+    padding: 14px 18px;
+  }
+
+  .input-area {
+    padding: 12px 14px calc(16px + env(safe-area-inset-bottom));
+  }
+
+  .input-row {
+    gap: 8px;
+  }
+
+  .input-wrap {
+    min-height: 58px;
+    padding: 12px 14px;
+  }
+
+  .input-wrap textarea {
+    font-size: 17px;
+    min-height: 28px;
+  }
+
+  .send-btn {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    font-size: 20px;
+  }
+
+  .hint-row {
+    display: none;
+  }
+}

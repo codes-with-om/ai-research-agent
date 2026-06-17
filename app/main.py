@@ -1,4 +1,7 @@
-from fastapi import FastAPI
+from pathlib import Path
+from fastapi import FastAPI, Response, HTTPException
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel,Field, field_validator
 from app.graph import build_graph
 from app.tools.web_search import web_search
@@ -15,12 +18,20 @@ app = FastAPI(
     version="0.1.0"
 )
 
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
+BASE_DIR = Path(__file__).resolve().parent
+STATIC_DIR = BASE_DIR / "static"
+
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
-@app.get("/")
+@app.get("/", include_in_schema=False)
 def serve_ui():
-    return FileResponse("app/static/index.html")
+    return FileResponse(STATIC_DIR / "index.html")
+
+
+@app.head("/", include_in_schema=False)
+def serve_ui_head():
+    return Response(status_code=200)
 
 
 class ResearchRequest(BaseModel):
@@ -126,3 +137,21 @@ def debug_research(request: ResearchRequest):
         "review_feedback": final_state.get("review_feedback"),
         "final_answer": final_state.get("final_answer"),
     }
+
+@app.get("/{full_path:path}", include_in_schema=False)
+def frontend_fallback(full_path: str):
+    blocked_paths = {
+        "docs",
+        "openapi.json",
+        "health",
+        "research",
+        "debug-research",
+        "test_llm",
+        "test-search",
+        "static",
+    }
+
+    if full_path.split("/")[0] in blocked_paths:
+        raise HTTPException(status_code=404)
+
+    return FileResponse(STATIC_DIR / "index.html")
