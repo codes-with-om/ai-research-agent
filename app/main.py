@@ -5,6 +5,8 @@ from app.tools.web_search import web_search
 from app.llm.client import call_llm
 from app.logger import logger
 import time
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 research_graph = build_graph()
 
@@ -12,6 +14,13 @@ app = FastAPI(
     title="AI Research Agent API",
     version="0.1.0"
 )
+
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
+
+
+@app.get("/")
+def serve_ui():
+    return FileResponse("app/static/index.html")
 
 
 class ResearchRequest(BaseModel):

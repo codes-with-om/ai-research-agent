@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Research Agent</title>
+  <link rel="stylesheet" href="/static/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+  <div class="app">
+
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-icon">AI</div>
+        <div>
+          <div class="sidebar-title">AI Research Agent</div>
+          <div class="sidebar-sub">FastAPI + LangGraph</div>
+        </div>
+      </div>
+
+      <div class="stack-pills">
+        <span class="pill pill-purple">FastAPI</span>
+        <span class="pill pill-cyan">LangGraph</span>
+        <span class="pill pill-pink">Web Search</span>
+      </div>
+
+      <button id="newChatBtn" class="new-chat-btn">+ New Chat</button>
+
+      <div class="sidebar-label">Examples</div>
+
+      <div class="chat-history-item active">
+        <span>💡</span>
+        <span class="chat-history-text">What is RAG?</span>
+      </div>
+
+      <div class="chat-history-item">
+        <span>✍️</span>
+        <span class="chat-history-text">Write a welcome email</span>
+      </div>
+
+      <div class="chat-history-item">
+        <span>🔍</span>
+        <span class="chat-history-text">Compare GPT and Claude</span>
+      </div>
+
+      <div class="sidebar-bottom">
+        <div class="user-row">
+          <div class="avatar">OM</div>
+          <div class="user-name">Om Pratap Singh</div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div class="status-dot"></div>
+          <div>
+            <div class="topbar-title">Research Assistant</div>
+            <div class="topbar-model">llama-3.1-8b-instant</div>
+          </div>
+        </div>
+
+        <div class="topbar-actions">
+          <div id="statusBadge" class="status-badge">
+            <span class="status-dot"></span>
+            Ready
+          </div>
+        </div>
+      </header>
+
+      <section id="chatBox" class="chat-box">
+        <div class="msg-row bot">
+          <div class="msg-avatar bot">AI</div>
+          <div id="welcomeMessage" class="msg-bubble">
+             Hi there 👋 Ask me anything. I can research or write depending on your query.
+          </div>
+        </div>
+      </section>
+
+      <section class="input-area">
+        <div class="hint-row">
+          <button class="hint-chip">What is RAG?</button>
+          <button class="hint-chip">Compare GPT and Claude</button>
+          <button class="hint-chip">Write a new joinee email</button>
+        </div>
+
+        <div class="input-row">
+          <div class="input-wrap">
+            <button class="attach-btn" type="button"></button>
+            <textarea id="queryInput" placeholder="Ask anything..."></textarea>
+          </div>
+
+          <button id="sendBtn" class="send-btn">➤</button>
+        </div>
+      </section>
+    </main>
+
+  </div>
+
+  <script src="/static/script.js"></script>
+</body>
+</html>
