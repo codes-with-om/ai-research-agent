@@ -63,3 +63,23 @@ def test_search():
         "count": len(results),
         "results": results
     }
+
+@app.post("/debug-research")
+def debug_research(request: ResearchRequest):
+    initial_state = {
+        "query": request.query
+    }
+
+    final_state = research_graph.invoke(initial_state)
+
+    return {
+        "query": final_state.get("query"),
+        "query_analysis": final_state.get("query_analysis"),
+        "plan": final_state.get("plan"),
+        "search_query": final_state.get("search_query"),
+        "web_results": final_state.get("web_results"),
+        "research_notes": final_state.get("research_notes"),
+        "draft_answer": final_state.get("draft_answer"),
+        "review_feedback": final_state.get("review_feedback"),
+        "final_answer": final_state.get("final_answer"),
+    }

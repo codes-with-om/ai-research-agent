@@ -250,3 +250,29 @@ def finalizer_node(state: ResearchState)-> ResearchState:
     state['final_answer'] = final_answer
 
     return state
+
+def router_node(state: ResearchState) -> ResearchState:
+    query = state["query"]
+    query_analysis = state["query_analysis"]
+
+    prompt = f"""
+    Decide whether web search is required.
+
+    User Query:
+    {query}
+
+    Query Analysis:
+    {query_analysis}
+
+    Rules:
+    - Return YES if the question needs current information, recent events, web research, company information, product comparisons, or external facts.
+    - Return NO if the question can be answered from general knowledge, explanations, coding help, or writing tasks.
+    - Return only YES or NO.
+
+    Answer:
+    """
+
+    decision = call_llm(prompt).strip().upper()
+    state["needs_web_search"] = decision == "YES"
+
+    return state
