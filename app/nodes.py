@@ -284,10 +284,19 @@ def router_node(state: ResearchState) -> ResearchState:
     Query Analysis:
     {query_analysis}
 
-    Rules:
-    - Return YES if the question needs current information, recent events, web research, company information, product comparisons, or external facts.
-    - Return NO if the question can be answered from general knowledge, explanations, coding help, or writing tasks.
-    - Return only YES or NO.
+    Return only YES or NO.
+
+    Return YES if:
+    - The query asks about a technical concept, framework, tool, company, product, technology, or acronym.
+    - The query contains terms like RAG, LLM, GPT, Claude, Gemini, LangChain, LangGraph, Embeddings, Vector Database, FAISS, OpenAI, Anthropic, Google AI.
+    - The query asks "what is", "explain", "define", "compare", "how does it work".
+    - The query requires factual information or research.
+
+    Return NO if:
+    - The user wants writing help.
+    - The user wants an email, blog, letter, message, poem, story, or content generation.
+    - The user wants coding help using information already provided.
+    - The query can be answered without external research.
 
     Answer:
     """
@@ -296,5 +305,10 @@ def router_node(state: ResearchState) -> ResearchState:
     state["needs_web_search"] = decision == "YES"
 
     logger.info(f"Router decision: {decision}")
+
+    if decision == "YES":
+        state["execution_path"] = "research"
+    else:
+        state["execution_path"] = "direct"
 
     return state

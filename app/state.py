@@ -12,3 +12,4 @@ class ResearchState(TypedDict):
     final_answer: Optional[str]
     web_results: Optional[list[str]]
     needs_web_search: Optional[bool]
+    execution_path: Optional[str]

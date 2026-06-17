@@ -1,7 +1,10 @@
 from fastapi import FastAPI
-from pydantic import BaseModel
+from pydantic import BaseModel,Field, field_validator
 from app.graph import build_graph
 from app.tools.web_search import web_search
+from app.llm.client import call_llm
+from app.logger import logger
+import time
 
 research_graph = build_graph()
 
@@ -12,14 +15,26 @@ app = FastAPI(
 
 
 class ResearchRequest(BaseModel):
-    query: str
+    query: str = Field(..., min_length=1, max_length=500)
+
+    @field_validator("query")
+    @classmethod
+    def query_must_not_be_empty(cls, value: str) -> str:
+        cleaned_value = value.strip()
+
+        if not cleaned_value:
+            raise ValueError("Query cannot be empty")
+
+        return cleaned_value
 
 
 class ResearchResponse(BaseModel):
     query: str
     status: str
+    execution_path: str
+    execution_time: float
     message: str
-
+    sources: list[str]
 
 @app.get("/health")
 def health_check():
@@ -31,19 +46,40 @@ def health_check():
 
 @app.post("/research", response_model=ResearchResponse)
 def research(request: ResearchRequest):
+    start_time = time.time()
     initial_state = {
         "query": request.query
     }
 
-    final_state = research_graph.invoke(initial_state)
+    try:
+        logger.info(f"Research request received: {request.query}")
 
-    return {
-    "query": final_state["query"],
-    "status": "completed",
-    "message": final_state["final_answer"]
-}
+        final_state = research_graph.invoke(initial_state)
 
-from app.llm.client import call_llm
+        execution_time = round(time.time() - start_time, 2)
+
+        logger.info("Research request completed successfully")
+
+        return {
+            "query": final_state["query"],
+            "status": "completed",
+            "message": final_state["final_answer"],
+            "execution_path": final_state["execution_path"],
+            "execution_time": execution_time,
+            "sources": final_state.get("web_results", [])
+        }
+
+    except Exception as e:
+        logger.error(f"Research request failed: {str(e)}")
+
+        return {
+            "query": request.query,
+            "status": "failed",
+            "message": "Unable to process request right now. Please try again later.",
+            "execution_path": "unknown",
+            "execution_time": 0,
+            "sources": []
+        }
 
 @app.get("/test_llm")
 def test_llm():
