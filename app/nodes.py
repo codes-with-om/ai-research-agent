@@ -162,7 +162,11 @@ def researcher_node(state: ResearchState)-> ResearchState:
 
 def writer_node(state: ResearchState)-> ResearchState:
     query = state["query"]
-    research_notes = state['research_notes']
+    research_notes = state.get("research_notes")
+
+    if not research_notes:
+        research_notes = [f"User request: {query}"]
+
     notes_text = "\n".join(research_notes)
 
     prompt = f"""

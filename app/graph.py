@@ -3,6 +3,12 @@ from langgraph.graph import StateGraph,START,END
 from app.state import ResearchState
 from app.nodes import planner_node,researcher_node,writer_node,reviewer_node,finalizer_node,search_query_node,query_analyzer_node,router_node
 
+def route_after_router(state: ResearchState) -> str:
+    if state["needs_web_search"]:
+        return "Planner"
+
+    return "Writer"
+
 def build_graph():
     graph = StateGraph(ResearchState)
 
@@ -17,7 +23,14 @@ def build_graph():
 
     graph.add_edge(START, "QueryAnalyzer")
     graph.add_edge("QueryAnalyzer", "Router")
-    graph.add_edge("Router","Planner")
+    graph.add_conditional_edges(
+        "Router",
+        route_after_router,
+        {
+            "Planner": "Planner",
+            "Writer": "Writer"
+        }
+    )
     graph.add_edge("Planner", "SearchQuery")
     graph.add_edge("SearchQuery", "Researcher")
     graph.add_edge("Researcher", "Writer")
