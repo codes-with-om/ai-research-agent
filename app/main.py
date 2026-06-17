@@ -19,7 +19,6 @@ class ResearchResponse(BaseModel):
     query: str
     status: str
     message: str
-    search_query_used: str
 
 
 @app.get("/health")
@@ -39,11 +38,10 @@ def research(request: ResearchRequest):
     final_state = research_graph.invoke(initial_state)
 
     return {
-        "query": final_state["query"],
-        "status": "completed",
-        "message": final_state["final_answer"],
-        "search_query_used": final_state["search_query"]
-    }
+    "query": final_state["query"],
+    "status": "completed",
+    "message": final_state["final_answer"]
+}
 
 from app.llm.client import call_llm
 

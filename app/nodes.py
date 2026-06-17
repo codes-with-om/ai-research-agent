@@ -1,9 +1,11 @@
 from app.state import ResearchState
 from app.llm.client import call_llm
 from app.tools.web_search import web_search
+from app.logger import logger
 
 def query_analyzer_node(state: ResearchState) -> ResearchState:
     query = state['query']
+    logger.info(f"Query Analyzer started: {query}")
 
     prompt = f"""
     Analyze the user's query for an AI research agent.
@@ -29,6 +31,7 @@ def query_analyzer_node(state: ResearchState) -> ResearchState:
     """
 
     query_analysis = call_llm(prompt)
+    logger.info("Query analysis completed")
 
     state["query_analysis"] = query_analysis
 
@@ -117,6 +120,8 @@ def search_query_node(state: ResearchState) -> ResearchState:
 
     state["search_query"] = search_query
 
+    logger.info(f"Search query: {search_query}")
+
     return state
 
 def researcher_node(state: ResearchState)-> ResearchState:
@@ -155,9 +160,8 @@ def researcher_node(state: ResearchState)-> ResearchState:
         for note in llm_response.split("\n")
         if note.strip()
     ]
-
     state['research_notes'] = research_notes
-
+    logger.info(f"Web results found: {len(search_results)}")
     return state
 
 def writer_node(state: ResearchState)-> ResearchState:
@@ -194,6 +198,7 @@ def writer_node(state: ResearchState)-> ResearchState:
     llm_response = call_llm(prompt)
 
     state["draft_answer"] = llm_response
+    logger.info("Writer node completed")
 
     return state
 
@@ -212,9 +217,20 @@ def reviewer_node(state: ResearchState) -> ResearchState:
     Draft Answer:
     {draft_answer}
 
-    Give short, practical feedback.
-    Mention what is good and what should be improved.
-    Do not rewrite the answer.
+    Review only:
+    - clarity
+    - structure
+    - grammar
+    - completeness
+
+    Rules:
+    - Do not suggest new facts, deadlines, policies, links, examples, statistics, or assumptions.
+    - Do not suggest business rules unless they already exist in the draft.
+    - Do not rewrite the answer.
+    - Give short, practical feedback.
+    - Do not suggest adding information that is missing.
+    - Review only the content already present.
+    - Do not suggest deadlines, policies, verification rules, legal text, pricing, links, examples, or business processes.
     """
 
     review_feedback = call_llm(prompt)
@@ -240,18 +256,18 @@ def finalizer_node(state: ResearchState)-> ResearchState:
     {review_feedback}
 
     Return only the final improved answer.
-    Do not mention reviewer feedback.
-    Do not include phrases like "Feedback Applied".
 
     Rules:
-    - Do not add new facts that are not present in the draft answer.
-    - Do not invent statistics, parameter counts, benchmark scores, pricing, or dataset sizes.
-    - Preserve factual caution.
-    - Remove unsupported or overly specific claims.
+    - Improve clarity, grammar, and structure only.
+    - Do not add new facts, deadlines, policies, links, examples, claims, or assumptions.
+    - Ignore reviewer suggestions that introduce information not already present in the draft.
+    - Do not mention reviewer feedback.
+    - Do not include phrases like "Feedback Applied".
     """
 
     final_answer = call_llm(prompt)
     state['final_answer'] = final_answer
+    logger.info("Final answer generated")
 
     return state
 
@@ -278,5 +294,7 @@ def router_node(state: ResearchState) -> ResearchState:
 
     decision = call_llm(prompt).strip().upper()
     state["needs_web_search"] = decision == "YES"
+
+    logger.info(f"Router decision: {decision}")
 
     return state
